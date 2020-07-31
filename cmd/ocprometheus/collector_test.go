@@ -9,10 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aristanetworks/goarista/gnmi"
-	"github.com/aristanetworks/goarista/test"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/aristanetworks/goarista/gnmi"
+	"github.com/aristanetworks/goarista/test"
 )
 
 func makeMetrics(cfg *Config, expValues map[source]float64, notification *pb.Notification,
@@ -119,7 +120,12 @@ metrics:
           help: Fan Speed
         - name: igmpSnoopingInf
           path: /Sysdb/igmpsnooping/vlanStatus/(?P<vlan>.+)/ethGroup/(?P<mac>.+)/intf/(?P<intf>.+)
-          help: IGMP snooping status`)
+          help: IGMP snooping status
+        - name: lldpNeighborInfo
+          path: /Sysdb/l2discovery/lldp/status/local/1/portStatus/(?P<intf>.+)/remoteSystem/(?P<remoteSystemIndex>.+)/sysName
+          help: LLDP sysName for the interface
+          valuelabel: name
+          defaultvalue: 1`)
 	cfg, err := parseConfig(config)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
@@ -153,6 +159,12 @@ metrics:
 					Value: &pb.TypedValue_JsonVal{JsonVal: []byte("\"Fan1.1\"")},
 				},
 			},
+			{
+				Path: makePath("l2discovery/lldp/status/local/1/portStatus/Ethernet1/1/remoteSystem/1/sysName"),
+				Val: &pb.TypedValue{
+					Value: &pb.TypedValue_JsonVal{JsonVal: []byte("{\"value\":\"neighborHostName\"}")},
+				},
+			},
 		},
 	}
 	expValues := map[source]float64{
@@ -172,6 +184,10 @@ metrics:
 			addr: "10.1.1.1",
 			path: "/Sysdb/environment/cooling/status/fan/name",
 		}: 2.5,
+		{
+			addr: "10.1.1.1",
+			path: "/Sysdb/l2discovery/lldp/status/local/1/portStatus/Ethernet1/1/remoteSystem/1/sysName",
+		}: 1,
 	}
 
 	coll.update("10.1.1.1:6042", makeResponse(notif))

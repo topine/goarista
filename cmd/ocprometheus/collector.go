@@ -11,11 +11,12 @@ import (
 	"sync"
 
 	"github.com/aristanetworks/glog"
-	"github.com/aristanetworks/goarista/gnmi"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/aristanetworks/goarista/gnmi"
 )
 
 // A metric source.
@@ -202,6 +203,9 @@ func parseValue(update *pb.Update) (interface{}, string, bool) {
 					return num, "value", true
 				}
 				return valFloat, "value", true
+			}
+			if vString, ok := vIntf.(string); ok {
+				return vString, "", true
 			}
 		}
 	case bool:
